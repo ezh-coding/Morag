@@ -40,16 +40,26 @@
       <button class="tab" data-v="guide"><span class="tab-count" id="guide-count">0</span>הנחיות</button>
       <button class="tab" data-v="task"><span class="tab-count" id="task-count">0</span>משימות</button>
       <button class="tab" data-v="meet"><span class="tab-count" id="meet-count">0</span>פגישות</button>
+      <button class="tab" data-v="schedule">לו״ז</button>
     </div>
-    <button id="btn-task" class="btn-p" style="width:auto; display:none;">+ משימה</button>
-    <button id="btn-guide" class="btn-p" style="width:auto; display:none;">+ הנחייה</button>
-    <button id="btn-meet" class="btn-p" style="width:auto; display:none;">+ בקשה</button>
   </div>
 
   <main id="all-main"></main>
   <main id="guide-main" class="hidden"></main>
   <main id="task-main" class="hidden"></main>
   <main id="meet-main" class="hidden"></main>
+  <main id="schedule-main" class="hidden"></main>
+
+  <!-- כפתור פלוס צף -->
+  <div class="fab-wrap">
+    <div id="fab-menu" class="fab-menu hidden">
+      <button type="button" class="fab-item" id="fab-task">+ משימה</button>
+      <button type="button" class="fab-item" id="fab-guide">+ הנחייה</button>
+      <button type="button" class="fab-item" id="fab-meet">+ בקשה לפגישה</button>
+      <button type="button" class="fab-item" id="fab-schedule">+ בקשה ללו״ז</button>
+    </div>
+    <button id="fab-btn" class="fab" aria-label="הוסף">+</button>
+  </div>
 </div>
 
 <!-- מודל משימה -->
@@ -112,6 +122,45 @@
       <textarea id="m-notes" placeholder="הערות" rows="3" maxlength="600"></textarea>
       <label>משתתפים *</label>
       <div class="abox"><div class="aqk"><button type="button" id="m-all">בחר הכל</button><button type="button" id="m-clear">נקה</button></div><div id="m-list"></div></div>
+      <button type="submit" class="btn-p">שלח</button>
+    </form>
+  </div>
+</div>
+
+<!-- מודל עריכת מועד פגישה -->
+<div id="modal-meet-edit" class="modal hidden">
+  <div class="mdl">
+    <button class="close" onclick="closeModal('meet-edit')">×</button>
+    <h2>עריכת מועד פגישה</h2>
+    <form id="form-meet-edit">
+      <input type="hidden" id="me-id" />
+      <label>תאריך</label>
+      <input type="date" id="me-date" />
+      <label>שעה</label>
+      <input type="time" id="me-time" />
+      <button type="submit" class="btn-p">עדכן</button>
+    </form>
+  </div>
+</div>
+
+<!-- מודל בקשה ללו"ז -->
+<div id="modal-schedule" class="modal hidden">
+  <div class="mdl">
+    <button class="close" onclick="closeModal('schedule')">×</button>
+    <h2>בקשה לזמן בלו״ז</h2>
+    <form id="form-schedule">
+      <input id="s-title" placeholder="כותרת *" required maxlength="120" />
+      <select id="s-type" required>
+        <option value="">סוג *</option>
+        <option>יוזמה</option>
+        <option>התנסות</option>
+        <option>מסדר</option>
+      </select>
+      <label>משך זמן משוער</label>
+      <div class="row">
+        <div class="col"><input type="number" id="s-duration" min="1" placeholder="משך" required /></div>
+        <div class="col"><select id="s-unit"><option value="דקות">דקות</option><option value="שעות">שעות</option></select></div>
+      </div>
       <button type="submit" class="btn-p">שלח</button>
     </form>
   </div>

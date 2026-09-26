@@ -60,8 +60,8 @@ const CADETS = USERS.filter(x => x.r === 'c');
 const OFFICERS = USERS.filter(x => x.r === 'o');
 const ALL_USERS = USERS;
 
-let user = null, view = 'all', tasks = [], guides = [], meets = [];
-let unsubscribeTasks = null, unsubscribeGuides = null, unsubscribeMeets = null;
+let user = null, view = 'all', tasks = [], guides = [], meets = [], schedules = [];
+let unsubscribeTasks = null, unsubscribeGuides = null, unsubscribeMeets = null, unsubscribeSchedules = null;
 
 // אלמנטים ב-DOM
 const loginEl = document.getElementById('login');
@@ -75,14 +75,16 @@ const allMainEl = document.getElementById('all-main');
 const guideMainEl = document.getElementById('guide-main');
 const taskMainEl = document.getElementById('task-main');
 const meetMainEl = document.getElementById('meet-main');
+const scheduleMainEl = document.getElementById('schedule-main');
 const logoutBtn = document.getElementById('logout');
 const tabs = document.querySelectorAll('.tab');
-const btnTask = document.getElementById('btn-task');
-const btnGuide = document.getElementById('btn-guide');
-const btnMeet = document.getElementById('btn-meet');
 const formTask = document.getElementById('form-task');
 const formGuide = document.getElementById('form-guide');
 const formMeet = document.getElementById('form-meet');
+const formMeetEdit = document.getElementById('form-meet-edit');
+const formSchedule = document.getElementById('form-schedule');
+const fabBtn = document.getElementById('fab-btn');
+const fabMenu = document.getElementById('fab-menu');
 
 // אכלוס הרשימות
 USERS.forEach(x => {
@@ -109,12 +111,13 @@ CADETS.forEach(c => {
 function getCbs(id) { return Array.from(document.getElementById(id).querySelectorAll('input[type="checkbox"]')); }
 function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 function closeModal(m) { document.getElementById(`modal-${m}`).classList.add('hidden'); }
+function closeFab() { fabMenu.classList.add('hidden'); fabBtn.classList.remove('open'); }
 
 function updateCounts() {
   if (!user) return;
   const guideCount = guides.filter(g => !g.conf || !g.conf[user.u]).length;
-  const meetCount = meets.filter(m => (m.ru === user.u || (m.part && m.part.includes(user.u))) && m.conf && !Object.values(m.conf).some(x => x !== null)).length;
-  
+  const meetCount = meets.filter(m => (m.ru === user.u || (m.part && m.part.includes(user.u))) && m.conf && !Object.values(m.conf).some(x => x)).length;
+
   document.getElementById('guide-count').textContent = guideCount;
   document.getElementById('meet-count').textContent = meetCount;
 }
@@ -131,13 +134,13 @@ tabs.forEach(t => {
     tabs.forEach(x => x.classList.remove('active'));
     t.classList.add('active');
     view = t.dataset.v;
-    [allMainEl, guideMainEl, taskMainEl, meetMainEl].forEach(el => el.classList.add('hidden'));
-    [btnTask, btnGuide, btnMeet].forEach(b => b.style.display = 'none');
-    
+    [allMainEl, guideMainEl, taskMainEl, meetMainEl, scheduleMainEl].forEach(el => el.classList.add('hidden'));
+
     if (view === 'all') allMainEl.classList.remove('hidden');
-    else if (view === 'guide') { guideMainEl.classList.remove('hidden'); btnGuide.style.display = 'inline-flex'; }
-    else if (view === 'task') { taskMainEl.classList.remove('hidden'); btnTask.style.display = 'inline-flex'; }
-    else if (view === 'meet') { meetMainEl.classList.remove('hidden'); btnMeet.style.display = 'inline-flex'; }
+    else if (view === 'guide') guideMainEl.classList.remove('hidden');
+    else if (view === 'task') taskMainEl.classList.remove('hidden');
+    else if (view === 'meet') meetMainEl.classList.remove('hidden');
+    else if (view === 'schedule') scheduleMainEl.classList.remove('hidden');
     render();
   });
 });
@@ -147,9 +150,9 @@ document.getElementById('form-login').addEventListener('submit', e => {
   e.preventDefault();
   const selectedUsername = userSel.value;
   const enteredPassword = passSel.value.trim();
-  
+
   const foundUser = USERS.find(x => x.u === selectedUsername);
-  
+
   if (foundUser && foundUser.p === enteredPassword) {
     errSel.classList.add('hidden');
     loginUser(foundUser);
@@ -167,11 +170,10 @@ function loginUser(u) {
 
   loginEl.classList.add('hidden');
   appEl.classList.remove('hidden');
-  
+
   view = 'all';
   tabs.forEach(x => x.classList.toggle('active', x.dataset.v === 'all'));
-  [allMainEl, guideMainEl, taskMainEl, meetMainEl].forEach(el => el.classList.toggle('hidden', el !== allMainEl));
-  [btnTask, btnGuide, btnMeet].forEach(b => b.style.display = 'none');
+  [allMainEl, guideMainEl, taskMainEl, meetMainEl, scheduleMainEl].forEach(el => el.classList.toggle('hidden', el !== allMainEl));
 
   startListeners();
 }
@@ -179,15 +181,40 @@ function loginUser(u) {
 logoutBtn.addEventListener('click', () => {
   stopListeners();
   user = null;
-  tasks = []; guides = []; meets = [];
+  tasks = []; guides = []; meets = []; schedules = [];
   passSel.value = '';
   appEl.classList.add('hidden');
   loginEl.classList.remove('hidden');
 });
 
-btnTask.addEventListener('click', () => { formTask.reset(); document.getElementById('t-box').classList.add('hidden'); document.getElementById('modal-task').classList.remove('hidden'); });
-btnGuide.addEventListener('click', () => { formGuide.reset(); document.getElementById('modal-guide').classList.remove('hidden'); });
-btnMeet.addEventListener('click', () => { formMeet.reset(); getCbs('m-list').forEach(c => c.checked = false); document.getElementById('modal-meet').classList.remove('hidden'); });
+// כפתור פלוס צף
+fabBtn.addEventListener('click', () => {
+  fabMenu.classList.toggle('hidden');
+  fabBtn.classList.toggle('open');
+});
+
+document.getElementById('fab-task').addEventListener('click', () => {
+  closeFab();
+  formTask.reset();
+  document.getElementById('t-box').classList.add('hidden');
+  document.getElementById('modal-task').classList.remove('hidden');
+});
+document.getElementById('fab-guide').addEventListener('click', () => {
+  closeFab();
+  formGuide.reset();
+  document.getElementById('modal-guide').classList.remove('hidden');
+});
+document.getElementById('fab-meet').addEventListener('click', () => {
+  closeFab();
+  formMeet.reset();
+  getCbs('m-list').forEach(c => c.checked = false);
+  document.getElementById('modal-meet').classList.remove('hidden');
+});
+document.getElementById('fab-schedule').addEventListener('click', () => {
+  closeFab();
+  formSchedule.reset();
+  document.getElementById('modal-schedule').classList.remove('hidden');
+});
 
 document.getElementById('t-all').addEventListener('click', () => getCbs('t-list').forEach(c => c.checked = true));
 document.getElementById('t-clear').addEventListener('click', () => getCbs('t-list').forEach(c => c.checked = false));
@@ -201,13 +228,13 @@ formTask.addEventListener('submit', async e => {
   const assign = document.getElementById('t-assign').value;
   const due = document.getElementById('t-due').value;
   const scope = document.querySelector('input[name="t-scope"]:checked').value;
-  
+
   let users = scope === 'team' ? CADETS.map(c => c.u) : getCbs('t-list').filter(c => c.checked).map(c => c.value);
   if (!title || !assign || users.length === 0) return alert('מלאו את כל השדות');
-  
+
   const stat = {};
   users.forEach(u => stat[u] = false);
-  
+
   await addDoc(collection(db, 'tasks'), {
     title, desc, assign, due, scope, by: user.d, bu: user.u, stat,
     t: Date.now(), createdAt: serverTimestamp()
@@ -223,12 +250,12 @@ formGuide.addEventListener('submit', async e => {
   const text = document.getElementById('g-text').value.trim();
   const from = document.getElementById('g-from').value;
   const to = document.getElementById('g-to').value;
-  
+
   if (!title || !text || !from || !to) return alert('מלאו את כל השדות');
-  
+
   const conf = {};
   ALL_USERS.forEach(u => conf[u.u] = null);
-  
+
   await addDoc(collection(db, 'guides'), {
     title, text, from, to, by: user.d, bu: user.u, conf,
     t: Date.now(), createdAt: serverTimestamp()
@@ -242,21 +269,54 @@ formMeet.addEventListener('submit', async e => {
   const type = document.getElementById('m-type').value;
   const date = document.getElementById('m-date').value;
   const notes = document.getElementById('m-notes').value.trim();
-  
+
   let part = getCbs('m-list').filter(c => c.checked).map(c => c.value);
   part.push(user.u);
-  
+  part = [...new Set(part)];
+
   if (!type || part.length === 0) return alert('מלאו את כל השדות');
-  
-  const conf = user.r === 'o' ? {} : null;
-  if (conf) part.forEach(u => conf[u] = null);
-  
+
+  // רק צוערים שאינם מזמין הפגישה צריכים לאשר. קצינים לעולם לא נדרשים לאשר.
+  const conf = {};
+  part.forEach(u => {
+    const p = ALL_USERS.find(x => x.u === u);
+    if (p && p.r === 'c' && u !== user.u) conf[u] = null;
+  });
+
   await addDoc(collection(db, 'meets'), {
-    type, date, notes, part, req: user.d, ru: user.u, conf,
+    type, date, time: '', notes, part, req: user.d, ru: user.u, conf,
     t: Date.now(), createdAt: serverTimestamp()
   });
   formMeet.reset();
   document.getElementById('modal-meet').classList.add('hidden');
+});
+
+formMeetEdit.addEventListener('submit', async e => {
+  e.preventDefault();
+  const id = document.getElementById('me-id').value;
+  const date = document.getElementById('me-date').value;
+  const time = document.getElementById('me-time').value;
+  if (!id) return;
+  await updateDoc(doc(db, 'meets', id), { date, time });
+  document.getElementById('modal-meet-edit').classList.add('hidden');
+});
+
+formSchedule.addEventListener('submit', async e => {
+  e.preventDefault();
+  const title = document.getElementById('s-title').value.trim();
+  const type = document.getElementById('s-type').value;
+  const durationValue = document.getElementById('s-duration').value;
+  const durationUnit = document.getElementById('s-unit').value;
+
+  if (!title || !type || !durationValue) return alert('מלאו את כל השדות');
+
+  await addDoc(collection(db, 'schedule'), {
+    title, type, durationValue: Number(durationValue), durationUnit,
+    by: user.d, bu: user.u,
+    t: Date.now(), createdAt: serverTimestamp()
+  });
+  formSchedule.reset();
+  document.getElementById('modal-schedule').classList.add('hidden');
 });
 
 function urgency(due) {
@@ -266,6 +326,13 @@ function urgency(due) {
   if (days <= 1) return 'red';
   if (days <= 7) return 'org';
   return 'green';
+}
+
+function meetStatus(m) {
+  const keys = Object.keys(m.conf || {});
+  if (keys.length === 0) return null;
+  const allApproved = keys.every(u => m.conf[u]);
+  return allApproved ? 'מאושר' : 'ממתין לאישור';
 }
 
 function renderAll() {
@@ -297,6 +364,12 @@ function renderMeets() {
   rel.forEach(m => meetMainEl.appendChild(renderMeet(m)));
 }
 
+function renderSchedules() {
+  scheduleMainEl.innerHTML = '';
+  if (schedules.length === 0) { scheduleMainEl.innerHTML = '<p class="empty">אין בקשות ללו״ז.</p>'; return; }
+  schedules.forEach(s => scheduleMainEl.appendChild(renderSchedule(s)));
+}
+
 function render() {
   if (!user) return;
   updateCounts();
@@ -304,6 +377,7 @@ function render() {
   else if (view === 'guide') renderGuides();
   else if (view === 'task') renderTasks();
   else if (view === 'meet') renderMeets();
+  else if (view === 'schedule') renderSchedules();
 }
 
 function renderTask(t) {
@@ -313,9 +387,9 @@ function renderTask(t) {
   const total = Object.keys(t.stat || {}).length;
   const pct = total ? Math.round((done / total) * 100) : 0;
   const my = t.stat ? t.stat[user.u] : false;
-  
+
   card.innerHTML = `<div class="tmain"><div class="tinfo"><div><span class="tag tagg">${esc(t.assign)}</span></div><h3>${esc(t.title)}</h3>${t.desc ? `<div class="tdesc">${esc(t.desc)}</div>` : ''}<small>${t.due ? 'דד-ליין: ' + esc(t.due) : ''}</small></div><div class="prog" style="--pct:${pct}"><span>${done}/${total}</span></div></div><div class="act">${user.r === 'c' && t.stat && t.stat[user.u] !== undefined ? `<label class="chk"><input type="checkbox" ${my ? 'checked' : ''} data-id="${t.id}"/><span class="status-icon ${my ? 'status-done' : 'status-pending'}">${my ? '✔' : '✗'}</span><span>ביצעתי</span></label>` : ''}<button class="lbtn" data-detail="${t.id}" data-type="t">פירוט</button></div>`;
-  
+
   const cb = card.querySelector('input');
   if (cb) cb.addEventListener('change', async e => {
     const i = tasks.find(x => x.id === e.target.dataset.id);
@@ -333,9 +407,9 @@ function renderGuide(g) {
   const card = document.createElement('article');
   card.className = 'gcard';
   const conf = g.conf && g.conf[user.u] !== undefined && g.conf[user.u] !== null;
-  
+
   card.innerHTML = `<h3 class="gtitle">${esc(g.title)}</h3><div class="gtext">${esc(g.text)}</div><div class="gdates"><span>מ: ${esc(g.from)}</span><span>עד: ${esc(g.to)}</span></div><div class="act">${user.r === 'c' || user.r === 'o' ? `<label class="chk"><input type="checkbox" ${conf ? 'checked' : ''} data-id="${g.id}"/><span class="status-icon ${conf ? 'status-done' : 'status-pending'}">${conf ? '✔' : '✗'}</span><span>אישרתי קריאה</span></label>` : ''}<button class="lbtn" data-detail="${g.id}" data-type="g">אישורים</button></div>`;
-  
+
   const cb = card.querySelector('input');
   if (cb) cb.addEventListener('change', async e => {
     const i = guides.find(x => x.id === e.target.dataset.id);
@@ -352,20 +426,89 @@ function renderGuide(g) {
 function renderMeet(m) {
   const card = document.createElement('article');
   card.className = 'mcard';
-  
-  const canDelete = user.r === 'o' || m.ru === user.u;
-  
-  card.innerHTML = `<span class="mbadge">${esc(m.type)}</span>${m.date ? `<div class="mdate">📅 ${esc(m.date)}</div>` : ''}<div class="mreq">בקש: ${esc(m.req)}</div>${m.notes ? `<div>${esc(m.notes)}</div>` : ''}<div class="mact">${user.r === 'o' ? `<button class="lbtn" data-detail="${m.id}" data-type="m">אישורים</button>` : ''}${canDelete ? `<button class="lbtn lbtn-bad" data-delete="${m.id}">מחק</button>` : ''}</div>`;
-  
-  if (user.r === 'o') card.querySelector('[data-detail]').addEventListener('click', () => showDetail(m.id, 'm'));
-  if (canDelete) card.querySelector('[data-delete]').addEventListener('click', () => deleteMeet(m.id));
+
+  // האם המשתמש הנוכחי צריך לאשר את הפגישה (צוער שהוזמן ואינו המזמין)
+  const needsMyApproval = !!(m.conf && Object.prototype.hasOwnProperty.call(m.conf, user.u));
+  const myApproved = needsMyApproval ? !!m.conf[user.u] : false;
+  const status = meetStatus(m);
+
+  // מזמין, קצינים וכל מוזמן יכולים למחוק. עריכת מועד שמורה למזמין ולקצינים.
+  const canDelete = user.r === 'o' || m.ru === user.u || (m.part && m.part.includes(user.u));
+  const canEdit = user.r === 'o' || m.ru === user.u;
+
+  let statusBadge = '';
+  if (status === 'ממתין לאישור') statusBadge = `<span class="mbadge mbadge-pending">ממתין לאישור</span>`;
+  else if (status === 'מאושר') statusBadge = `<span class="mbadge mbadge-approved">מאושר</span>`;
+
+  card.innerHTML = `
+    <span class="mbadge">${esc(m.type)}</span>${statusBadge}
+    ${m.date ? `<div class="mdate">📅 ${esc(m.date)}${m.time ? ' · ' + esc(m.time) : ''}</div>` : ''}
+    <div class="mreq">בקש: ${esc(m.req)}</div>
+    ${m.notes ? `<div>${esc(m.notes)}</div>` : ''}
+    <div class="mact">
+      ${needsMyApproval ? `<label class="chk"><input type="checkbox" ${myApproved ? 'checked' : ''} data-id="${m.id}"/><span class="status-icon ${myApproved ? 'status-done' : 'status-pending'}">${myApproved ? '✔' : '✗'}</span><span>מאשר/ת הגעה</span></label>` : ''}
+      ${user.r === 'o' ? `<button class="lbtn" data-detail="${m.id}" data-type="m">אישורים</button>` : ''}
+      ${canEdit ? `<button class="lbtn" data-edit="${m.id}">ערוך מועד</button>` : ''}
+      ${canDelete ? `<button class="lbtn lbtn-bad" data-delete="${m.id}">מחק</button>` : ''}
+    </div>`;
+
+  const cb = card.querySelector('input[type="checkbox"]');
+  if (cb) cb.addEventListener('change', async e => {
+    const i = meets.find(x => x.id === e.target.dataset.id);
+    if (i) {
+      i.conf[user.u] = e.target.checked ? true : null;
+      await updateDoc(doc(db, 'meets', i.id), { conf: i.conf });
+    }
+  });
+
+  const detailBtn = card.querySelector('[data-detail]');
+  if (detailBtn) detailBtn.addEventListener('click', () => showDetail(m.id, 'm'));
+
+  const editBtn = card.querySelector('[data-edit]');
+  if (editBtn) editBtn.addEventListener('click', () => openMeetEdit(m.id));
+
+  const delBtn = card.querySelector('[data-delete]');
+  if (delBtn) delBtn.addEventListener('click', () => deleteMeet(m.id));
 
   return card;
+}
+
+function renderSchedule(s) {
+  const card = document.createElement('article');
+  card.className = 'scard';
+  const canDelete = user.r === 'o' || s.bu === user.u;
+
+  card.innerHTML = `
+    <span class="mbadge">${esc(s.type)}</span>
+    <h3 class="gtitle">${esc(s.title)}</h3>
+    <div class="mreq">משך משוער: ${esc(String(s.durationValue))} ${esc(s.durationUnit)}</div>
+    <div class="mreq">בקש: ${esc(s.by)}</div>
+    <div class="mact">${canDelete ? `<button class="lbtn lbtn-bad" data-delete-s="${s.id}">מחק</button>` : ''}</div>`;
+
+  const delBtn = card.querySelector('[data-delete-s]');
+  if (delBtn) delBtn.addEventListener('click', () => deleteSchedule(s.id));
+
+  return card;
+}
+
+function openMeetEdit(id) {
+  const m = meets.find(x => x.id === id);
+  if (!m) return;
+  document.getElementById('me-id').value = id;
+  document.getElementById('me-date').value = m.date || '';
+  document.getElementById('me-time').value = m.time || '';
+  document.getElementById('modal-meet-edit').classList.remove('hidden');
 }
 
 async function deleteMeet(id) {
   if (confirm('בטוח שברצונך למחוק?')) {
     await deleteDoc(doc(db, 'meets', id));
+  }
+}
+
+async function deleteSchedule(id) {
+  if (confirm('בטוח שברצונך למחוק?')) {
+    await deleteDoc(doc(db, 'schedule', id));
   }
 }
 
@@ -382,17 +525,17 @@ function showDetail(id, ty) {
   } else if (ty === 'm') {
     const m = meets.find(x => x.id === id);
     const rows = Object.keys(m.conf || {}).map(u => { const c = ALL_USERS.find(x => x.u === u); return `<li class="${m.conf[u] ? 'ok' : ''}">${esc(c ? c.d : u)} — <span class="status-icon ${m.conf[u] ? 'status-done' : 'status-pending'}">${m.conf[u] ? '✔' : '✗'}</span></li>`; }).join('');
-    detail.innerHTML = `<h2>אישורי קריאה</h2><ul class="dlist">${rows}</ul>`;
+    detail.innerHTML = `<h2>אישורי הגעה</h2><ul class="dlist">${rows.length ? rows : '<li>אין צוערים הממתינים לאישור (רק קצינים הוזמנו)</li>'}</ul>`;
   }
   document.getElementById('modal-detail').classList.remove('hidden');
 }
 
 document.getElementById('modal-detail').addEventListener('click', e => { if (e.target.id === 'modal-detail') closeModal('detail'); });
-['task', 'guide', 'meet'].forEach(m => { const md = document.getElementById(`modal-${m}`); md.addEventListener('click', e => { if (e.target === md) closeModal(m); }); });
+['task', 'guide', 'meet', 'meet-edit', 'schedule'].forEach(m => { const md = document.getElementById(`modal-${m}`); md.addEventListener('click', e => { if (e.target === md) closeModal(m); }); });
 
 function stopListeners() {
-  [unsubscribeTasks, unsubscribeGuides, unsubscribeMeets].forEach(fn => { if (fn) fn(); });
-  unsubscribeTasks = unsubscribeGuides = unsubscribeMeets = null;
+  [unsubscribeTasks, unsubscribeGuides, unsubscribeMeets, unsubscribeSchedules].forEach(fn => { if (fn) fn(); });
+  unsubscribeTasks = unsubscribeGuides = unsubscribeMeets = unsubscribeSchedules = null;
 }
 
 function startListeners() {
@@ -412,4 +555,9 @@ function startListeners() {
     meets = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     render();
   }, err => console.error('meets', err));
+
+  unsubscribeSchedules = onSnapshot(query(collection(db, 'schedule'), orderBy('t', 'desc')), snap => {
+    schedules = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+  }, err => console.error('schedule', err));
 }
