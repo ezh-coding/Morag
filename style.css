@@ -58,7 +58,7 @@ label { font-size:13px; color:var(--dim); margin-top:10px; }
 .dlist { list-style:none; margin:16px 0 0; padding:0; display:flex; flex-direction:column; gap:6px; max-height:340px; overflow-y:auto; }
 .dlist li { display:flex; justify-content:space-between; align-items:center; padding:9px 12px; border-radius:8px; background:#f2e9d4; font-size:14px; }
 .dlist li.ok { color:var(--ok); background:var(--ok2); }
-.emblem { width:38px; height:38px; }
+.emblem { width:auto; height:4vh; }
 .note { font-size:12px; color:var(--dim); margin:10px 0; font-style:italic; }
 
 /* כפתור פלוס צף */
