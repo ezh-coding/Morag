@@ -5,7 +5,6 @@ import {
 import {
   getAuth,
   onAuthStateChanged,
-  signInWithEmailAndPassword,
   signOut
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 import {
@@ -127,8 +126,6 @@ document.getElementById('form-login').addEventListener('submit', async e=>{
   if(!m) return;
   errSel.classList.add('hidden');
   try {
-    await signInWithEmailAndPassword(auth, emailForUser(m.u), passSel.value);
-    passSel.value='';
   } catch (err) {
     console.error(err);
     errSel.textContent = 'פרטי הכניסה שגויים או שהמשתמש עדיין לא הוגדר ב-Firebase.';
