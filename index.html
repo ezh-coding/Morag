@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>מורג 108 — תצוגה סופית</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="demo-banner" style="background:var(--acc2); color:#fff2e2; font-size:12px; text-align:center; padding:6px;">🎖️ מורג 108 — תצוגה סופית (משימות + הנחיות + פגישות)</div>
+
+<div id="login" class="screen">
+  <div class="card">
+    <h1>מורג <span class="dot">·</span> 108</h1>
+    <p>לוח משימות הכשרה</p>
+    <form id="form-login">
+      <select id="user" required></select>
+      <input type="password" id="pass" placeholder="סיסמה" required />
+      <button type="submit" class="btn-p">כניסה</button>
+      <div id="err" class="err hidden"></div>
+      <p style="font-size:11px; margin-top:16px;">צוער1/1001 | קצין1/2001</p>
+    </form>
+  </div>
+</div>
+
+<div id="app" class="screen hidden">
+  <header>
+    <div class="hdr-left">
+      <svg class="emblem" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120"><g><path d="M 45 55 Q 25 48 10 42" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/></g><g><path d="M 155 55 Q 175 48 190 42" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/></g><g transform="translate(100, 60)"><path d="M 0,-16 L 4.6,-8 L 13.8,-8 L 7.4,-2 L 11.9,6 L 0,0 L -11.9,6 L -7.4,-2 L -13.8,-8 L -4.6,-8 Z" fill="#fbe6c8" stroke="#f0d580" stroke-width="1.2"/></g></svg>
+      <div>
+        <h1>מורג 108</h1>
+        <span class="sub">פיקוד העורף</span>
+        <span class="motto">אין הדבר תלוי אלא בי</span>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <span id="uname" class="user"></span>
+      <span id="urole" class="role"></span>
+      <button id="logout" class="lbtn" style="color:#fff; text-decoration:none;">יציאה</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="tabs">
+      <button class="tab active" data-v="all">הכל</button>
+      <button class="tab" data-v="guide"><span class="tab-count" id="guide-count">0</span>הנחיות</button>
+      <button class="tab" data-v="task"><span class="tab-count" id="task-count">0</span>משימות</button>
+      <button class="tab" data-v="meet"><span class="tab-count" id="meet-count">0</span>פגישות</button>
+    </div>
+    <button id="btn-task" class="btn-p" style="width:auto; display:none;">+ משימה</button>
+    <button id="btn-guide" class="btn-p" style="width:auto; display:none;">+ הנחייה</button>
+    <button id="btn-meet" class="btn-p" style="width:auto; display:none;">+ בקשה</button>
+  </div>
+
+  <main id="all-main"></main>
+  <main id="guide-main" class="hidden"></main>
+  <main id="task-main" class="hidden"></main>
+  <main id="meet-main" class="hidden"></main>
+</div>
+
+<!-- מודל משימה -->
+<div id="modal-task" class="modal hidden">
+  <div class="mdl">
+    <button class="close" onclick="closeModal('task')">×</button>
+    <h2>משימה חדשה</h2>
+    <form id="form-task">
+      <input id="t-title" placeholder="כותרת *" required maxlength="120" />
+      <textarea id="t-desc" placeholder="תיאור" rows="3" maxlength="600"></textarea>
+      <select id="t-assign" required>
+        <option value="">למי מגישים *</option>
+        <option>מפק״ץ 1</option>
+        <option>מפק״ץ 2</option>
+        <option>סמ״פ</option>
+        <option>מ״פ</option>
+        <option>קב״ט</option>
+        <option>קחו״ד</option>
+        <option>ק׳ תיאום</option>
+        <option>קא״ג</option>
+        <option>ק׳ סימולציות</option>
+        <option>קה״ד</option>
+      </select>
+      <div class="row"><div class="col"><label>דד-ליין</label><input type="date" id="t-due" /></div></div>
+      <label>סוג</label>
+      <div class="toggle">
+        <label><input type="radio" name="t-scope" value="team" checked /><span>כל הצוערים</span></label>
+        <label><input type="radio" name="t-scope" value="per" /><span>ספציפי</span></label>
+      </div>
+      <div id="t-box" class="abox hidden"><div class="aqk"><button type="button" id="t-all">בחר הכל</button><button type="button" id="t-clear">נקה</button></div><div id="t-list"></div></div>
+      <button type="submit" class="btn-p">שמור</button>
+    </form>
+  </div>
+</div>
+
+<!-- מודל הנחייה -->
+<div id="modal-guide" class="modal hidden">
+  <div class="mdl">
+    <button class="close" onclick="closeModal('guide')">×</button>
+    <h2>הנחייה חדשה</h2>
+    <form id="form-guide">
+      <input id="g-title" placeholder="כותרת *" required maxlength="120" />
+      <textarea id="g-text" placeholder="הנחייה *" rows="4" required maxlength="1000"></textarea>
+      <div class="row"><div class="col"><label>מתאריך *</label><input type="date" id="g-from" required /></div><div class="col"><label>עד תאריך *</label><input type="date" id="g-to" required /></div></div>
+      <p class="note">ההנחייה חשופה לכל הצוערים והקצינים</p>
+      <button type="submit" class="btn-p">שמור</button>
+    </form>
+  </div>
+</div>
+
+<!-- מודל פגישה -->
+<div id="modal-meet" class="modal hidden">
+  <div class="mdl">
+    <button class="close" onclick="closeModal('meet')">×</button>
+    <h2>בקשה לפגישה</h2>
+    <form id="form-meet">
+      <select id="m-type" required><option value="">סוג *</option><option>פ.ע</option><option>פ.א</option><option>א.ת</option><option>תחקור התנסות</option><option>תחקור סימולציה</option></select>
+      <label>תאריך הפגישה</label>
+      <input type="date" id="m-date" />
+      <textarea id="m-notes" placeholder="הערות" rows="3" maxlength="600"></textarea>
+      <label>משתתפים *</label>
+      <div class="abox"><div class="aqk"><button type="button" id="m-all">בחר הכל</button><button type="button" id="m-clear">נקה</button></div><div id="m-list"></div></div>
+      <button type="submit" class="btn-p">שלח</button>
+    </form>
+  </div>
+</div>
+
+<!-- מודל פירוט -->
+<div id="modal-detail" class="modal hidden">
+  <div class="mdl">
+    <button class="close" onclick="closeModal('detail')">×</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+  <script type="module" src="script.js"></script>
+</body>
+</html>
