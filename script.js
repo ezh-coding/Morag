@@ -113,6 +113,7 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s || 
 function closeModal(m) { document.getElementById(`modal-${m}`).classList.add('hidden'); }
 function closeFab() { fabMenu.classList.add('hidden'); fabBtn.classList.remove('open'); }
 
+window.closeModal = closeModal;
 function updateCounts() {
   if (!user) return;
   const guideCount = guides.filter(g => !g.conf || !g.conf[user.u]).length;
