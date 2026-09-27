@@ -22,7 +22,7 @@ main { padding:0 24px 100px; max-width:900px; margin:0 auto; width:100%; display
 .empty { text-align:center; color:var(--dim); padding:60px 20px; }
 .tcard { background:var(--surface); border:1px solid var(--border); border-left:5px solid var(--ok); border-radius:10px; padding:18px; }
 .tcard.org { border-left-color:#d4912e; } .tcard.red { border-left-color:var(--bad); }
-.tmain { display:flex; justify-content:space-between; gap:16px; } .tinfo h3 { font-size:17px; margin-bottom:8px; } .tdesc { color:var(--dim); font-size:14px; margin:4px 0 8px; }
+.tmain { display:flex; justify-content:space-between; gap:16px; } .tinfo h3 { font-size:17px; margin-bottom:8px; } .tdesc { color:var(--dim); font-size:14px; margin:4px 0 8px; white-space:pre-wrap; word-wrap:break-word; }
 .tag { display:inline-block; font-size:11px; border-radius:999px; padding:2px 10px; margin-right:6px; }
 .tagg { color:#fff; background:var(--acc); border:1px solid var(--acc2); font-weight:600; } .tags { color:var(--dim); border:1px solid var(--border); }
 .prog { width:58px; height:58px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; background:conic-gradient(var(--ok) calc(var(--pct)*1%), #f2e9d4 0); }
@@ -35,12 +35,13 @@ main { padding:0 24px 100px; max-width:900px; margin:0 auto; width:100%; display
 .status-done { color:var(--ok); } .status-pending { color:#999; }
 .gcard { background:var(--surface); border:1px solid var(--border); border-right:5px solid var(--acc); border-radius:10px; padding:18px; }
 .gtitle { font-size:16px; font-weight:700; color:var(--text); margin:0 0 8px; }
-.gtext { font-size:15px; line-height:1.6; color:var(--dim); margin:8px 0; } .gdates { display:flex; gap:16px; font-size:12px; color:var(--dim); margin:10px 0; }
+.gtext { font-size:15px; line-height:1.6; color:var(--dim); margin:8px 0; white-space:pre-wrap; word-wrap:break-word; } .gdates { display:flex; gap:16px; font-size:12px; color:var(--dim); margin:10px 0; }
 .mcard { background:var(--surface); border:1px solid var(--border); border-right:5px solid #8b5a9e; border-radius:10px; padding:18px; }
 .mbadge { display:inline-block; font-size:11px; border-radius:999px; padding:3px 12px; background:#e8d9f0; color:#6b4fa0; border:1px solid #d9cdf0; font-weight:600; margin-left:6px; }
 .mbadge-pending { background:#fef3d7; color:#9c6b12; border:1px solid #f0d580; }
 .mbadge-approved { background:var(--ok2); color:var(--ok); border:1px solid var(--ok); }
 .mdate { font-size:12px; color:var(--dim); margin:8px 0; } .mreq { font-size:12px; color:var(--dim); }
+.mnote { white-space:pre-wrap; word-wrap:break-word; font-size:14px; margin:8px 0; }
 .mact { display:flex; gap:12px; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); flex-wrap:wrap; }
 .scard { background:var(--surface); border:1px solid var(--border); border-right:5px solid #2f8f7f; border-radius:10px; padding:18px; }
 .modal { position:fixed; inset:0; background:rgba(43,33,15,0.45); display:flex; align-items:center; justify-content:center; padding:20px; z-index:50; }
@@ -58,8 +59,24 @@ label { font-size:13px; color:var(--dim); margin-top:10px; }
 .dlist { list-style:none; margin:16px 0 0; padding:0; display:flex; flex-direction:column; gap:6px; max-height:340px; overflow-y:auto; }
 .dlist li { display:flex; justify-content:space-between; align-items:center; padding:9px 12px; border-radius:8px; background:#f2e9d4; font-size:14px; }
 .dlist li.ok { color:var(--ok); background:var(--ok2); }
-.emblem { width:auto; height:4vh; }
+.emblem { width:38px; height:38px; }
 .note { font-size:12px; color:var(--dim); margin:10px 0; font-style:italic; }
+
+/* מקרא צבעים בטאב משימות */
+.legend { display:flex; gap:18px; flex-wrap:wrap; justify-content:center; padding:4px 24px 90px; max-width:900px; margin:0 auto; font-size:12px; color:var(--dim); }
+.legend-item { display:flex; align-items:center; gap:6px; }
+.dot { width:10px; height:10px; border-radius:50%; display:inline-block; flex-shrink:0; }
+.dot-green { background:var(--ok); }
+.dot-org { background:#d4912e; }
+.dot-red { background:var(--bad); }
+
+/* עיצוב תאריך דד-ליין דינמי */
+.due-label { display:block; }
+.due-soon { font-weight:700; color:var(--text); }
+.due-overdue { font-weight:700; color:var(--bad); }
+
+/* מתג תלת-אפשרויות (כל המגמה / לפי צוות / ספציפי) */
+.toggle3 label { font-size:12px; padding:8px 4px; }
 
 /* כפתור פלוס צף */
 .fab-wrap { position:fixed; bottom:24px; left:24px; display:flex; flex-direction:column; align-items:flex-start; gap:10px; z-index:60; }

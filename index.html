@@ -47,16 +47,21 @@
   <main id="all-main"></main>
   <main id="guide-main" class="hidden"></main>
   <main id="task-main" class="hidden"></main>
+  <div id="task-legend" class="legend hidden">
+    <span class="legend-item"><span class="dot dot-green"></span> מעל שבוע להגשה</span>
+    <span class="legend-item"><span class="dot dot-org"></span> עד שבוע להגשה</span>
+    <span class="legend-item"><span class="dot dot-red"></span> היום / מחר / בחריגה מדדליין</span>
+  </div>
   <main id="meet-main" class="hidden"></main>
   <main id="schedule-main" class="hidden"></main>
 
   <!-- כפתור פלוס צף -->
   <div class="fab-wrap">
     <div id="fab-menu" class="fab-menu hidden">
-      <button type="button" class="fab-item" id="fab-task">+ משימה</button>
-      <button type="button" class="fab-item" id="fab-guide">+ הנחייה</button>
-      <button type="button" class="fab-item" id="fab-meet">+ בקשה לפגישה</button>
-      <button type="button" class="fab-item" id="fab-schedule">+ בקשה ללו״ז</button>
+      <button type="button" class="fab-item" id="fab-task">📝 משימה</button>
+      <button type="button" class="fab-item" id="fab-guide">📢 הנחייה</button>
+      <button type="button" class="fab-item" id="fab-meet">🤝 בקשה לפגישה</button>
+      <button type="button" class="fab-item" id="fab-schedule">📅 בקשה ללו״ז</button>
     </div>
     <button id="fab-btn" class="fab" aria-label="הוסף">+</button>
   </div>
@@ -69,26 +74,28 @@
     <h2>משימה חדשה</h2>
     <form id="form-task">
       <input id="t-title" placeholder="כותרת *" required maxlength="120" />
-      <textarea id="t-desc" placeholder="תיאור" rows="3" maxlength="600"></textarea>
-      <select id="t-assign" required>
-        <option value="">למי מגישים *</option>
-        <option>מפק״ץ 1</option>
-        <option>מפק״ץ 2</option>
-        <option>סמ״פ</option>
-        <option>מ״פ</option>
-        <option>קב״ט</option>
-        <option>קחו״ד</option>
-        <option>ק׳ תיאום</option>
-        <option>קא״ג</option>
-        <option>ק׳ סימולציות</option>
-        <option>קה״ד</option>
-      </select>
+      <textarea id="t-desc" placeholder="תיאור" rows="4" maxlength="2000"></textarea>
+
+      <label>למי מגישים * (ניתן לבחור כמה)</label>
+      <div class="abox"><div class="aqk"><button type="button" id="a-all">בחר הכל</button><button type="button" id="a-clear">נקה</button></div><div id="a-list"></div></div>
+
       <div class="row"><div class="col"><label>דד-ליין</label><input type="date" id="t-due" /></div></div>
-      <label>סוג</label>
-      <div class="toggle">
-        <label><input type="radio" name="t-scope" value="team" checked /><span>כל הצוערים</span></label>
+
+      <label>למי מוצגת המשימה</label>
+      <div class="toggle toggle3">
+        <label><input type="radio" name="t-scope" value="all" checked /><span>כל המגמה</span></label>
+        <label><input type="radio" name="t-scope" value="squad" /><span>לפי צוות</span></label>
         <label><input type="radio" name="t-scope" value="per" /><span>ספציפי</span></label>
       </div>
+
+      <div id="t-squad-box" class="hidden">
+        <label>בחר צוות</label>
+        <div class="toggle">
+          <label><input type="radio" name="t-squad" value="1" checked /><span>צוות 1</span></label>
+          <label><input type="radio" name="t-squad" value="2" /><span>צוות 2</span></label>
+        </div>
+      </div>
+
       <div id="t-box" class="abox hidden"><div class="aqk"><button type="button" id="t-all">בחר הכל</button><button type="button" id="t-clear">נקה</button></div><div id="t-list"></div></div>
       <button type="submit" class="btn-p">שמור</button>
     </form>
@@ -102,7 +109,7 @@
     <h2>הנחייה חדשה</h2>
     <form id="form-guide">
       <input id="g-title" placeholder="כותרת *" required maxlength="120" />
-      <textarea id="g-text" placeholder="הנחייה *" rows="4" required maxlength="1000"></textarea>
+      <textarea id="g-text" placeholder="הנחייה *" rows="6" required maxlength="5000"></textarea>
       <div class="row"><div class="col"><label>מתאריך *</label><input type="date" id="g-from" required /></div><div class="col"><label>עד תאריך *</label><input type="date" id="g-to" required /></div></div>
       <p class="note">ההנחייה חשופה לכל הצוערים והקצינים</p>
       <button type="submit" class="btn-p">שמור</button>
@@ -119,7 +126,7 @@
       <select id="m-type" required><option value="">סוג *</option><option>פ.ע</option><option>פ.א</option><option>א.ת</option><option>תחקור התנסות</option><option>תחקור סימולציה</option></select>
       <label>תאריך הפגישה</label>
       <input type="date" id="m-date" />
-      <textarea id="m-notes" placeholder="הערות" rows="3" maxlength="600"></textarea>
+      <textarea id="m-notes" placeholder="הערות" rows="4" maxlength="2000"></textarea>
       <label>משתתפים *</label>
       <div class="abox"><div class="aqk"><button type="button" id="m-all">בחר הכל</button><button type="button" id="m-clear">נקה</button></div><div id="m-list"></div></div>
       <button type="submit" class="btn-p">שלח</button>
