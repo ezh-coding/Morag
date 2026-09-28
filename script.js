@@ -85,6 +85,8 @@ const guideMainEl = document.getElementById('guide-main');
 const taskMainEl = document.getElementById('task-main');
 const meetMainEl = document.getElementById('meet-main');
 const scheduleMainEl = document.getElementById('schedule-main');
+const archiveMainEl = document.getElementById('archive-main');
+const archiveBtn = document.getElementById('archive-btn');
 const logoutBtn = document.getElementById('logout');
 const tabs = document.querySelectorAll('.tab');
 const formTask = document.getElementById('form-task');
@@ -135,8 +137,8 @@ window.closeModal = closeModal;
 
 function updateCounts() {
 if (!user) return;
-const guideCount = guides.filter(g => !g.conf || !g.conf[user.u]).length;
-const meetCount = meets.filter(m => (m.ru === user.u || (m.part && m.part.includes(user.u))) && m.conf && !Object.values(m.conf).some(x => x)).length;
+const guideCount = guides.filter(g => !g.archived && (!g.conf || !g.conf[user.u])).length;
+const meetCount = meets.filter(m => !m.archived && (m.ru === user.u || (m.part && m.part.includes(user.u))) && m.conf && !Object.values(m.conf).some(x => x)).length;
 
 document.getElementById('guide-count').textContent = guideCount;
 document.getElementById('meet-count').textContent = meetCount;
@@ -156,8 +158,9 @@ tabs.forEach(t => {
 t.addEventListener('click', () => {
 tabs.forEach(x => x.classList.remove('active'));
 t.classList.add('active');
+archiveBtn.classList.remove('active');
 view = t.dataset.v;
-[allMainEl, guideMainEl, taskMainEl, meetMainEl, scheduleMainEl].forEach(el => el.classList.add('hidden'));
+[allMainEl, guideMainEl, taskMainEl, meetMainEl, scheduleMainEl, archiveMainEl].forEach(el => el.classList.add('hidden'));
 taskLegendEl.classList.add('hidden');
 
 if (view === 'all') allMainEl.classList.remove('hidden');
@@ -167,6 +170,17 @@ else if (view === 'meet') meetMainEl.classList.remove('hidden');
 else if (view === 'schedule') scheduleMainEl.classList.remove('hidden');
 render();
 });
+});
+
+archiveBtn.addEventListener('click', () => {
+closeFab();
+tabs.forEach(x => x.classList.remove('active'));
+archiveBtn.classList.add('active');
+[allMainEl, guideMainEl, taskMainEl, meetMainEl, scheduleMainEl].forEach(el => el.classList.add('hidden'));
+taskLegendEl.classList.add('hidden');
+archiveMainEl.classList.remove('hidden');
+view = 'archive';
+render();
 });
 
 // התחברות מקומית לפי סיסמה
@@ -197,7 +211,7 @@ appEl.classList.remove('hidden');
 
 view = 'all';
 tabs.forEach(x => x.classList.toggle('active', x.dataset.v === 'all'));
-[allMainEl, guideMainEl, taskMainEl, meetMainEl, scheduleMainEl].forEach(el => el.classList.toggle('hidden', el !== allMainEl));
+[allMainEl, guideMainEl, taskMainEl, meetMainEl, scheduleMainEl, archiveMainEl].forEach(el => el.classList.toggle('hidden', el !== allMainEl));
 
 startListeners();
 }
@@ -383,10 +397,11 @@ return da - db_;
 });
 }
 
-// צוערים רואים רק משימות שהוקצו להם; קצינים רואים את כל המשימות לצורך מעקב
+// צוערים רואים רק משימות שהוקצו להם; קצינים רואים את כל המשימות לצורך מעקב. פריטים בארכיון לא מוצגים כאן.
 function visibleTasksFor() {
-if (user.r === 'o') return tasks;
-return tasks.filter(t => t.stat && t.stat[user.u] !== undefined);
+const active = tasks.filter(t => !t.archived);
+if (user.r === 'o') return active;
+return active.filter(t => t.stat && t.stat[user.u] !== undefined);
 }
 
 function meetStatus(m) {
@@ -400,7 +415,7 @@ function renderAll() {
 allMainEl.innerHTML = '';
 const items = [];
 visibleTasksFor().forEach(t => items.push({ ty: 't', d: t, dt: t.due || '9999' }));
-guides.forEach(g => items.push({ ty: 'g', d: g, dt: g.to || '9999' }));
+guides.filter(g => !g.archived).forEach(g => items.push({ ty: 'g', d: g, dt: g.to || '9999' }));
 items.sort((a, b) => new Date(a.dt) - new Date(b.dt));
 if (items.length === 0) { allMainEl.innerHTML = '<p class="empty">אין משימות או הנחיות.</p>'; return; }
 items.forEach(i => allMainEl.appendChild(i.ty === 't' ? renderTask(i.d) : renderGuide(i.d)));
@@ -415,21 +430,23 @@ visible.forEach(t => taskMainEl.appendChild(renderTask(t)));
 
 function renderGuides() {
 guideMainEl.innerHTML = '';
-if (guides.length === 0) { guideMainEl.innerHTML = '<p class="empty">אין הנחיות.</p>'; return; }
-guides.forEach(g => guideMainEl.appendChild(renderGuide(g)));
+const active = guides.filter(g => !g.archived);
+if (active.length === 0) { guideMainEl.innerHTML = '<p class="empty">אין הנחיות.</p>'; return; }
+active.forEach(g => guideMainEl.appendChild(renderGuide(g)));
 }
 
 function renderMeets() {
 meetMainEl.innerHTML = '';
-const rel = meets.filter(m => m.ru === user.u || (m.part && m.part.includes(user.u)));
+const rel = meets.filter(m => !m.archived && (m.ru === user.u || (m.part && m.part.includes(user.u))));
 if (rel.length === 0) { meetMainEl.innerHTML = '<p class="empty">אין פגישות.</p>'; return; }
 rel.forEach(m => meetMainEl.appendChild(renderMeet(m)));
 }
 
 function renderSchedules() {
 scheduleMainEl.innerHTML = '';
-if (schedules.length === 0) { scheduleMainEl.innerHTML = '<p class="empty">אין בקשות ללו״ז.</p>'; return; }
-schedules.forEach(s => scheduleMainEl.appendChild(renderSchedule(s)));
+const active = schedules.filter(s => !s.archived);
+if (active.length === 0) { scheduleMainEl.innerHTML = '<p class="empty">אין בקשות ללו״ז.</p>'; return; }
+active.forEach(s => scheduleMainEl.appendChild(renderSchedule(s)));
 }
 
 function render() {
@@ -440,6 +457,7 @@ else if (view === 'guide') renderGuides();
 else if (view === 'task') renderTasks();
 else if (view === 'meet') renderMeets();
 else if (view === 'schedule') renderSchedules();
+else if (view === 'archive') renderArchive();
 }
 
 function renderTask(t) {
@@ -453,8 +471,9 @@ const my = t.stat ? t.stat[user.u] : false;
 const assignList = Array.isArray(t.assign) ? t.assign : (t.assign ? [t.assign] : []);
 const assignTags = assignList.map(a => `<span class="tag tagg">${esc(a)}</span>`).join('');
 const dueClass = dueDateClass(t.due);
+const canArchive = user.r === 'o' || t.bu === user.u;
 
-card.innerHTML = `<div class="tmain"><div class="tinfo"><div>${assignTags}</div><h3>${esc(t.title)}</h3>${t.desc ? `<div class="tdesc">${esc(t.desc)}</div>` : ''}<small class="due-label ${dueClass}">${t.due ? 'דד-ליין: ' + esc(t.due) : ''}</small></div><div class="prog" style="--pct:${pct}"><span>${done}/${total}</span></div></div><div class="act">${user.r === 'c' && t.stat && t.stat[user.u] !== undefined ? `<label class="chk"><input type="checkbox" ${my ? 'checked' : ''} data-id="${t.id}"/><span class="status-icon ${my ? 'status-done' : 'status-pending'}">${my ? '✔' : '✗'}</span><span>ביצעתי</span></label>` : ''}<button class="lbtn" data-detail="${t.id}" data-type="t">פירוט</button></div>`;
+card.innerHTML = `<div class="tmain"><div class="tinfo"><div>${assignTags}</div><h3>${esc(t.title)}</h3>${t.desc ? `<div class="tdesc">${esc(t.desc)}</div>` : ''}<small class="due-label ${dueClass}">${t.due ? 'דד-ליין: ' + esc(t.due) : ''}</small></div><div class="prog" style="--pct:${pct}"><span>${done}/${total}</span></div></div><div class="act">${user.r === 'c' && t.stat && t.stat[user.u] !== undefined ? `<label class="chk"><input type="checkbox" ${my ? 'checked' : ''} data-id="${t.id}"/><span class="status-icon ${my ? 'status-done' : 'status-pending'}">${my ? '✔' : '✗'}</span><span>ביצעתי</span></label>` : ''}<button class="lbtn" data-detail="${t.id}" data-type="t">פירוט</button>${canArchive ? `<button class="trash-btn" data-archive title="העבר לארכיון">🗑️</button>` : ''}</div>`;
 
 const cb = card.querySelector('input');
 if (cb) cb.addEventListener('change', async e => {
@@ -466,6 +485,8 @@ await updateDoc(doc(db, 'tasks', i.id), { stat: i.stat });
 });
 
 card.querySelector('[data-detail]').addEventListener('click', () => showDetail(t.id, 't'));
+const archBtn = card.querySelector('[data-archive]');
+if (archBtn) archBtn.addEventListener('click', () => archiveItem('tasks', t.id));
 return card;
 }
 
@@ -473,8 +494,9 @@ function renderGuide(g) {
 const card = document.createElement('article');
 card.className = 'gcard';
 const conf = g.conf && g.conf[user.u] !== undefined && g.conf[user.u] !== null;
+const canArchive = user.r === 'o' || g.bu === user.u;
 
-card.innerHTML = `<h3 class="gtitle">${esc(g.title)}</h3><div class="gtext">${esc(g.text)}</div><div class="gdates"><span>מ: ${esc(g.from)}</span><span>עד: ${esc(g.to)}</span></div><div class="act">${user.r === 'c' || user.r === 'o' ? `<label class="chk"><input type="checkbox" ${conf ? 'checked' : ''} data-id="${g.id}"/><span class="status-icon ${conf ? 'status-done' : 'status-pending'}">${conf ? '✔' : '✗'}</span><span>אישרתי קריאה</span></label>` : ''}<button class="lbtn" data-detail="${g.id}" data-type="g">אישורים</button></div>`;
+card.innerHTML = `<h3 class="gtitle">${esc(g.title)}</h3><div class="gtext">${esc(g.text)}</div><div class="gdates"><span>מ: ${esc(g.from)}</span><span>עד: ${esc(g.to)}</span></div><div class="act">${user.r === 'c' || user.r === 'o' ? `<label class="chk"><input type="checkbox" ${conf ? 'checked' : ''} data-id="${g.id}"/><span class="status-icon ${conf ? 'status-done' : 'status-pending'}">${conf ? '✔' : '✗'}</span><span>אישרתי קריאה</span></label>` : ''}<button class="lbtn" data-detail="${g.id}" data-type="g">אישורים</button>${canArchive ? `<button class="trash-btn" data-archive title="העבר לארכיון">🗑️</button>` : ''}</div>`;
 
 const cb = card.querySelector('input');
 if (cb) cb.addEventListener('change', async e => {
@@ -486,6 +508,8 @@ await updateDoc(doc(db, 'guides', i.id), { conf: i.conf });
 });
 
 card.querySelector('[data-detail]').addEventListener('click', () => showDetail(g.id, 'g'));
+const archBtn = card.querySelector('[data-archive]');
+if (archBtn) archBtn.addEventListener('click', () => archiveItem('guides', g.id));
 return card;
 }
 
@@ -498,8 +522,8 @@ const needsMyApproval = !!(m.conf && Object.prototype.hasOwnProperty.call(m.conf
 const myApproved = needsMyApproval ? !!m.conf[user.u] : false;
 const status = meetStatus(m);
 
-// מזמין, קצינים וכל מוזמן יכולים למחוק. עריכת מועד שמורה למזמין ולקצינים.
-const canDelete = user.r === 'o' || m.ru === user.u || (m.part && m.part.includes(user.u));
+// מזמין, קצינים וכל מוזמן יכולים להעביר לארכיון. עריכת מועד שמורה למזמין ולקצינים.
+const canArchive = user.r === 'o' || m.ru === user.u || (m.part && m.part.includes(user.u));
 const canEdit = user.r === 'o' || m.ru === user.u;
 
 let statusBadge = '';
@@ -515,7 +539,7 @@ ${m.notes ? `<div class="mnote">${esc(m.notes)}</div>` : ''}
 ${needsMyApproval ? `<label class="chk"><input type="checkbox" ${myApproved ? 'checked' : ''} data-id="${m.id}"/><span class="status-icon ${myApproved ? 'status-done' : 'status-pending'}">${myApproved ? '✔' : '✗'}</span><span>מאשר/ת הגעה</span></label>` : ''}
 ${user.r === 'o' ? `<button class="lbtn" data-detail="${m.id}" data-type="m">אישורים</button>` : ''}
 ${canEdit ? `<button class="lbtn" data-edit="${m.id}">ערוך מועד</button>` : ''}
-${canDelete ? `<button class="lbtn lbtn-bad" data-delete="${m.id}">מחק</button>` : ''}
+${canArchive ? `<button class="trash-btn" data-archive title="העבר לארכיון">🗑️</button>` : ''}
 </div>`;
 
 const cb = card.querySelector('input[type="checkbox"]');
@@ -533,8 +557,8 @@ if (detailBtn) detailBtn.addEventListener('click', () => showDetail(m.id, 'm'));
 const editBtn = card.querySelector('[data-edit]');
 if (editBtn) editBtn.addEventListener('click', () => openMeetEdit(m.id));
 
-const delBtn = card.querySelector('[data-delete]');
-if (delBtn) delBtn.addEventListener('click', () => deleteMeet(m.id));
+const archBtn = card.querySelector('[data-archive]');
+if (archBtn) archBtn.addEventListener('click', () => archiveItem('meets', m.id));
 
 return card;
 }
@@ -542,17 +566,17 @@ return card;
 function renderSchedule(s) {
 const card = document.createElement('article');
 card.className = 'scard';
-const canDelete = user.r === 'o' || s.bu === user.u;
+const canArchive = user.r === 'o' || s.bu === user.u;
 
 card.innerHTML = `
 <span class="mbadge">${esc(s.type)}</span>
 <h3 class="gtitle">${esc(s.title)}</h3>
 <div class="mreq">משך משוער: ${esc(String(s.durationValue))} ${esc(s.durationUnit)}</div>
 <div class="mreq">בקש: ${esc(s.by)}</div>
-<div class="mact">${canDelete ? `<button class="lbtn lbtn-bad" data-delete-s="${s.id}">מחק</button>` : ''}</div>`;
+<div class="mact">${canArchive ? `<button class="trash-btn" data-archive title="העבר לארכיון">🗑️</button>` : ''}</div>`;
 
-const delBtn = card.querySelector('[data-delete-s]');
-if (delBtn) delBtn.addEventListener('click', () => deleteSchedule(s.id));
+const archBtn = card.querySelector('[data-archive]');
+if (archBtn) archBtn.addEventListener('click', () => archiveItem('schedule', s.id));
 
 return card;
 }
@@ -566,15 +590,62 @@ document.getElementById('me-time').value = m.time || '';
 document.getElementById('modal-meet-edit').classList.remove('hidden');
 }
 
-async function deleteMeet(id) {
-if (confirm('בטוח שברצונך למחוק?')) {
-await deleteDoc(doc(db, 'meets', id));
+// העברה לארכיון (לא מחיקה סופית) — עם אישור מראש
+async function archiveItem(coll, id) {
+if (confirm('להעביר את הפריט לארכיון? ניתן יהיה לשחזר אותו משם.')) {
+await updateDoc(doc(db, coll, id), { archived: true, archivedAt: Date.now() });
 }
 }
 
-async function deleteSchedule(id) {
-if (confirm('בטוח שברצונך למחוק?')) {
-await deleteDoc(doc(db, 'schedule', id));
+async function restoreItem(coll, id) {
+await updateDoc(doc(db, coll, id), { archived: false });
+}
+
+function archiveSectionTitle(text) {
+const h = document.createElement('div');
+h.className = 'asection-title';
+h.textContent = text;
+return h;
+}
+
+function renderArchiveItem(coll, id, titleText, subText) {
+const card = document.createElement('article');
+card.className = 'acard';
+card.innerHTML = `
+<div class="ainfo">
+<h3>${esc(titleText)}</h3>
+${subText ? `<div class="tdesc">${esc(subText)}</div>` : ''}
+</div>
+<button class="lbtn" data-restore>שחזר</button>`;
+card.querySelector('[data-restore]').addEventListener('click', () => restoreItem(coll, id));
+return card;
+}
+
+function renderArchive() {
+archiveMainEl.innerHTML = '';
+const archTasks = tasks.filter(t => t.archived);
+const archGuides = guides.filter(g => g.archived);
+const archMeets = meets.filter(m => m.archived);
+const archSchedules = schedules.filter(s => s.archived);
+const total = archTasks.length + archGuides.length + archMeets.length + archSchedules.length;
+
+if (total === 0) { archiveMainEl.innerHTML = '<p class="empty">הארכיון ריק.</p>'; return; }
+
+if (archTasks.length) {
+archiveMainEl.appendChild(archiveSectionTitle('משימות'));
+archTasks.forEach(t => archiveMainEl.appendChild(renderArchiveItem('tasks', t.id, t.title, t.due ? 'דד-ליין: ' + t.due : '')));
+}
+if (archGuides.length) {
+archiveMainEl.appendChild(archiveSectionTitle('הנחיות'));
+archGuides.forEach(g => archiveMainEl.appendChild(renderArchiveItem('guides', g.id, g.title, g.text)));
+}
+if (archMeets.length) {
+archiveMainEl.appendChild(archiveSectionTitle('פגישות'));
+archMeets.forEach(m => archiveMainEl.appendChild(renderArchiveItem('meets', m.id, m.type, (m.date || '') + (m.notes ? ' · ' + m.notes : ''))));
+}
+if (archSchedules.length) {
+archiveMainEl.appendChild(archiveSectionTitle('לו״ז'));
+archSchedules.forEach(s => archiveMainEl.appendChild(renderArchiveItem('schedule', s.id, s.title, `${s.type} · ${s.durationValue} ${s.durationUnit}`)));
 }
 }
 
