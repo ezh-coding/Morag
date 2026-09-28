@@ -417,9 +417,12 @@ function meetStatus(m) {
 function renderAll() {
   allMainEl.innerHTML = '';
   const items = [];
-  visibleTasksFor().forEach(t => items.push({ ty: 't', d: t, dt: t.due || '9999' }));
-  guides.filter(g => !g.archived).forEach(g => items.push({ ty: 'g', d: g, dt: g.to || '9999' }));
-  items.sort((a, b) => new Date(a.dt) - new Date(b.dt));
+  visibleTasksFor().forEach(t => items.push({ ty: 't', d: t, createdTime: t.t || 0 }));
+  guides.filter(g => !g.archived).forEach(g => items.push({ ty: 'g', d: g, createdTime: g.t || 0 }));
+  
+  // מיון לפי זמן פרסום (האחרון שפורסם יופיע הכי למעלה)
+  items.sort((a, b) => b.createdTime - a.createdTime);
+
   if (items.length === 0) { allMainEl.innerHTML = '<p class="empty">אין משימות או הנחיות.</p>'; return; }
   items.forEach(i => allMainEl.appendChild(i.ty === 't' ? renderTask(i.d) : renderGuide(i.d)));
 }
