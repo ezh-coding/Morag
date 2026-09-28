@@ -54,8 +54,9 @@
   </div>
   <main id="meet-main" class="hidden"></main>
   <main id="schedule-main" class="hidden"></main>
+  <main id="archive-main" class="hidden"></main>
 
-  <!-- כפתור פלוס צף -->
+  <!-- כפתור פלוס צף + כפתור ארכיון -->
   <div class="fab-wrap">
     <div id="fab-menu" class="fab-menu hidden">
       <button type="button" class="fab-item" id="fab-task">📝 משימה</button>
@@ -63,7 +64,10 @@
       <button type="button" class="fab-item" id="fab-meet">🤝 בקשה לפגישה</button>
       <button type="button" class="fab-item" id="fab-schedule">📅 בקשה ללו״ז</button>
     </div>
-    <button id="fab-btn" class="fab" aria-label="הוסף">+</button>
+    <div class="fab-row">
+      <button id="archive-btn" class="fab fab-secondary" aria-label="ארכיון" title="ארכיון">🗑️</button>
+      <button id="fab-btn" class="fab" aria-label="הוסף">+</button>
+    </div>
   </div>
 </div>
 

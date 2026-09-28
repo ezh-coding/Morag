@@ -80,12 +80,25 @@ label { font-size:13px; color:var(--dim); margin-top:10px; }
 
 /* כפתור פלוס צף */
 .fab-wrap { position:fixed; bottom:24px; left:24px; display:flex; flex-direction:column; align-items:flex-start; gap:10px; z-index:60; }
+.fab-row { display:flex; align-items:center; gap:10px; }
 .fab { width:56px; height:56px; border-radius:50%; background:var(--acc); color:#fff; font-size:28px; border:none; box-shadow:0 4px 14px rgba(0,0,0,0.28); display:flex; align-items:center; justify-content:center; line-height:1; transition:transform 0.15s ease; }
 .fab:hover { filter:brightness(1.06); }
 .fab.open { transform:rotate(45deg); }
+.fab-secondary { width:46px; height:46px; font-size:19px; background:var(--surface); color:var(--dim); border:1px solid var(--border); box-shadow:0 2px 8px rgba(0,0,0,0.18); }
+.fab-secondary.active { background:var(--acc2); color:#fff; border-color:var(--acc2); }
 .fab-menu { display:flex; flex-direction:column; gap:8px; }
 .fab-item { background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:10px 16px; font-size:13px; font-weight:600; color:var(--text); box-shadow:0 2px 10px rgba(0,0,0,0.16); white-space:nowrap; text-align:right; }
 .fab-item:hover { background:var(--bg); }
+
+/* אייקון פח למחיקה/ארכוב על כרטיסים */
+.trash-btn { background:none; border:none; cursor:pointer; font-size:16px; line-height:1; padding:2px 4px; color:var(--bad); opacity:0.75; }
+.trash-btn:hover { opacity:1; }
+
+/* מסך ארכיון */
+.acard { background:var(--surface); border:1px solid var(--border); border-right:5px solid var(--dim); border-radius:10px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; gap:12px; opacity:0.85; }
+.acard .ainfo { flex:1; min-width:0; }
+.acard h3 { font-size:15px; }
+.asection-title { font-size:13px; color:var(--dim); font-weight:700; margin:8px 0 -4px; }
 
 @media (max-width:560px) {
   header { padding:12px 16px; }
