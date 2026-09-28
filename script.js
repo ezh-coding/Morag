@@ -131,8 +131,7 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s || 
 function closeModal(m) { document.getElementById(`modal-${m}`).classList.add('hidden'); }
 function closeFab() { fabMenu.classList.add('hidden'); fabBtn.classList.remove('open'); }
 
-// script.js נטען כ-module, לכן פונקציות בתוכו אינן נגישות אוטומטית מתוך
-// onclick="..." ב-HTML (זה רץ בהיקף הגלובלי). לכן חושפים כאן במפורש.
+// חשיפת closeModal ל-HTML
 window.closeModal = closeModal;
 
 function updateCounts() {
@@ -206,6 +205,7 @@ function loginUser(u) {
   uroleEl.textContent = user.r === 'o' ? 'קצין' : 'צוער';
   uroleEl.classList.toggle('off', user.r === 'o');
 
+  // מעבר מסך מיידי ב-DOM
   loginEl.classList.add('hidden');
   appEl.classList.remove('hidden');
 
@@ -213,7 +213,14 @@ function loginUser(u) {
   tabs.forEach(x => x.classList.toggle('active', x.dataset.v === 'all'));
   [allMainEl, guideMainEl, taskMainEl, meetMainEl, scheduleMainEl, archiveMainEl].forEach(el => el.classList.toggle('hidden', el !== allMainEl));
 
-  startListeners();
+  render();
+
+  // התחלת האזנה לנתונים בשרת
+  try {
+    startListeners();
+  } catch (err) {
+    console.error("שגיאה בחיבור ל-Firebase:", err);
+  }
 }
 
 logoutBtn.addEventListener('click', () => {
@@ -326,7 +333,6 @@ formMeet.addEventListener('submit', async e => {
 
   if (!type || part.length === 0) return alert('מלאו את כל השדות');
 
-  // רק צוערים שאינם מזמין הפגישה צריכים לאשר. קצינים לעולם לא נדרשים לאשר.
   const conf = {};
   part.forEach(u => {
     const p = ALL_USERS.find(x => x.u === u);
@@ -378,7 +384,6 @@ function urgency(due) {
   return 'green';
 }
 
-// בולד כשנשאר שבוע להגשה, אדום כשחרגו מהדדליין
 function dueDateClass(due) {
   if (!due) return '';
   const d = new Date(due), now = new Date(); now.setHours(0, 0, 0, 0);
@@ -388,7 +393,6 @@ function dueDateClass(due) {
   return '';
 }
 
-// מיון לפי דחיפות: הכי קרוב לדדליין קודם, ללא תאריך אחרון
 function sortByDue(list) {
   return [...list].sort((a, b) => {
     const da = a.due ? new Date(a.due).getTime() : Infinity;
@@ -397,7 +401,6 @@ function sortByDue(list) {
   });
 }
 
-// צוערים רואים רק משימות שהוקצו להם; קצינים רואים את כל המשימות לצורך מעקב. פריטים בארכיון לא מוצגים כאן.
 function visibleTasksFor() {
   const active = tasks.filter(t => !t.archived);
   if (user.r === 'o') return active;
@@ -517,12 +520,10 @@ function renderMeet(m) {
   const card = document.createElement('article');
   card.className = 'mcard';
 
-  // האם המשתמש הנוכחי צריך לאשר את הפגישה (צוער שהוזמן ואינו המזמין)
   const needsMyApproval = !!(m.conf && Object.prototype.hasOwnProperty.call(m.conf, user.u));
   const myApproved = needsMyApproval ? !!m.conf[user.u] : false;
   const status = meetStatus(m);
 
-  // מזמין, קצינים וכל מוזמן יכולים להעביר לארכיון. עריכת מועד שמורה למזמין ולקצינים.
   const canArchive = user.r === 'o' || m.ru === user.u || (m.part && m.part.includes(user.u));
   const canEdit = user.r === 'o' || m.ru === user.u;
 
@@ -590,7 +591,6 @@ function openMeetEdit(id) {
   document.getElementById('modal-meet-edit').classList.remove('hidden');
 }
 
-// העברה לארכיון (לא מחיקה סופית) — עם אישור מראש
 async function archiveItem(coll, id) {
   if (confirm('להעביר את הפריט לארכיון? ניתן יהיה לשחזר אותו משם.')) {
     await updateDoc(doc(db, coll, id), { archived: true, archivedAt: Date.now() });
@@ -681,20 +681,20 @@ function startListeners() {
   unsubscribeTasks = onSnapshot(query(collection(db, 'tasks'), orderBy('t', 'desc')), snap => {
     tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     render();
-  }, err => console.error('tasks', err));
+  }, err => console.error('tasks snapshot error:', err));
 
   unsubscribeGuides = onSnapshot(query(collection(db, 'guides'), orderBy('t', 'desc')), snap => {
     guides = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     render();
-  }, err => console.error('guides', err));
+  }, err => console.error('guides snapshot error:', err));
 
   unsubscribeMeets = onSnapshot(query(collection(db, 'meets'), orderBy('t', 'desc')), snap => {
     meets = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     render();
-  }, err => console.error('meets', err));
+  }, err => console.error('meets snapshot error:', err));
 
   unsubscribeSchedules = onSnapshot(query(collection(db, 'schedule'), orderBy('t', 'desc')), snap => {
     schedules = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     render();
-  }, err => console.error('schedule', err));
+  }, err => console.error('schedule snapshot error:', err));
 }
